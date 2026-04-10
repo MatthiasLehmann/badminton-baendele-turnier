@@ -1,0 +1,7 @@
+# Einheitliche Zeilenenden (LF) für alle Textdateien
+* text=auto eol=lf
+
+# Binärdateien unverändert lassen
+*.png binary
+*.jpg binary
+*.ico binary
