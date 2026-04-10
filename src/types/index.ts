@@ -123,3 +123,22 @@ export type ViewName =
   | 'standings'
   | 'presentation'
   | 'help';
+
+// ============================================================
+// Live-Session (Supabase)
+// ============================================================
+
+/** Status der Supabase-Verbindung */
+export type SessionStatus =
+  | 'disconnected'   // Keine Session aktiv
+  | 'connecting'     // Verbindungsaufbau
+  | 'connected'      // Verbunden und synchron
+  | 'error';         // Verbindungsfehler
+
+/** Alles was eine aktive Session beschreibt */
+export interface SessionState {
+  sessionId: string | null;
+  adminSecret: string | null;   // null = Zuschauer, string = Admin
+  status: SessionStatus;
+  error: string | null;
+}
