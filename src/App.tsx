@@ -141,6 +141,28 @@ export function App() {
         {currentView === 'help'         && <HelpPage />}
       </main>
 
+      {/* ---- Footer ---- */}
+      <footer className="hidden md:block text-center text-xs text-gray-400 dark:text-gray-600 py-3 border-t border-gray-200 dark:border-gray-800">
+        Erstellt von{' '}
+        <a
+          href="https://www.linkedin.com/in/lehmann-matthias-a2b11185"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-brand-600 dark:text-brand-400 hover:underline font-semibold"
+        >
+          Matthias Lehmann
+        </a>
+        {' · '}
+        <a
+          href="https://github.com/MatthiasLehmann/badminton-baendele-turnier"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-brand-600 dark:text-brand-400 hover:underline font-semibold"
+        >
+          GitHub
+        </a>
+      </footer>
+
       {/* ---- Mobile Bottom-Navigation ---- */}
       <nav className="md:hidden sticky bottom-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-40">
         <div className="flex">
