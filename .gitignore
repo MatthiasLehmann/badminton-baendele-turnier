@@ -30,3 +30,6 @@ npm-debug.log*
 
 # Local Netlify folder
 .netlify
+
+# Claude Code (lokale Konfiguration, nicht ins Repo)
+.claude/
