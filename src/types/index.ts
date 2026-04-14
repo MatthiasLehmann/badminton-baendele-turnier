@@ -112,6 +112,18 @@ export interface PairingResult {
 }
 
 // ============================================================
+// Sponsoren
+// ============================================================
+
+export interface Sponsor {
+  id: string;
+  name: string;
+  logoDataUrl: string;   // Base64-kodiertes Bild (data URL)
+  website?: string;
+  order: number;
+}
+
+// ============================================================
 // UI-State
 // ============================================================
 

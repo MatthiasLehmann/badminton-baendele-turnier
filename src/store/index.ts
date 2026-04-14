@@ -24,6 +24,7 @@ import {
   Round,
   ViewName,
   SessionState,
+  Sponsor,
 } from '../types';
 import { generatePairings, buildPairingHistory } from '../services/pairingService';
 import { nanoid } from '../utils/helpers';
@@ -54,6 +55,7 @@ interface AppStore {
   // ---- Daten ----
   players: Player[];
   tournament: Tournament | null;
+  sponsors: Sponsor[];
   darkMode: boolean;
   currentView: ViewName;
 
@@ -92,6 +94,12 @@ interface AppStore {
   joinLiveSession: (sessionId: string, adminSecret?: string) => Promise<void>;
   leaveLiveSession: () => void;
 
+  // ---- Sponsoren ----
+  addSponsor: (data: { name: string; logoDataUrl: string; website?: string }) => void;
+  updateSponsor: (id: string, data: Partial<Omit<Sponsor, 'id'>>) => void;
+  deleteSponsor: (id: string) => void;
+  reorderSponsors: (ids: string[]) => void;
+
   // ---- Import / Export ----
   exportAllData: () => string;
   importAllData: (json: string) => void;
@@ -106,6 +114,7 @@ export const useStore = create<AppStore>()(
     (set, get) => ({
       players: [],
       tournament: null,
+      sponsors: [],
       darkMode: false,
       currentView: 'dashboard',
       session: {
@@ -333,6 +342,37 @@ export const useStore = create<AppStore>()(
         }));
       },
 
+      // ---- Sponsoren ----
+      addSponsor: (data) =>
+        set((s) => ({
+          sponsors: [
+            ...s.sponsors,
+            { ...data, id: nanoid(), order: s.sponsors.length },
+          ],
+        })),
+
+      updateSponsor: (id, data) =>
+        set((s) => ({
+          sponsors: s.sponsors.map((sp) => (sp.id === id ? { ...sp, ...data } : sp)),
+        })),
+
+      deleteSponsor: (id) =>
+        set((s) => ({
+          sponsors: s.sponsors
+            .filter((sp) => sp.id !== id)
+            .map((sp, i) => ({ ...sp, order: i })),
+        })),
+
+      reorderSponsors: (ids) =>
+        set((s) => ({
+          sponsors: ids
+            .map((id, i) => {
+              const sp = s.sponsors.find((x) => x.id === id);
+              return sp ? { ...sp, order: i } : null;
+            })
+            .filter(Boolean) as Sponsor[],
+        })),
+
       // ---- Import / Export ----
       exportAllData: () => {
         const { players, tournament } = get();
@@ -354,6 +394,7 @@ export const useStore = create<AppStore>()(
       partialize: (s) => ({
         players: s.players,
         tournament: s.tournament,
+        sponsors: s.sponsors,
         darkMode: s.darkMode,
         currentView: s.currentView,
         // session bewusst ausgelassen
