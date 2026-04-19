@@ -139,7 +139,8 @@ export function App() {
         {currentView === 'tournament'   && <TournamentSetup />}
         {currentView === 'rounds'       && <RoundView />}
         {currentView === 'standings'    && <Standings />}
-        {currentView === 'timer'        && <TimerView />}
+        {/* Timer bleibt dauerhaft gemountet damit der Countdown bei Tab-Wechsel weiterläuft */}
+        <div className={currentView === 'timer' ? '' : 'hidden'}><TimerView /></div>
         {currentView === 'presentation' && <PresentationMode />}
         {currentView === 'help'         && <HelpPage />}
       </main>
