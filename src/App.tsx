@@ -161,6 +161,8 @@ export function App() {
         >
           GitHub
         </a>
+        {' · '}
+        v{__APP_VERSION__}
       </footer>
 
       {/* ---- Mobile Bottom-Navigation ---- */}
