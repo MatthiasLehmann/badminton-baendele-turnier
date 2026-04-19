@@ -55,8 +55,11 @@ function ResultForm({ match, players, onSave, onCancel, trackSetPoints }: Result
           −
         </button>
         <input
-          type="number" min={0} max={99} value={value}
-          onChange={(e) => onChange(Math.max(0, Number(e.target.value)))}
+          type="text" inputMode="numeric" pattern="[0-9]*" value={String(value)}
+          onChange={(e) => {
+            const cleaned = e.target.value.replace(/\D/g, '');
+            onChange(cleaned === '' ? 0 : Math.min(99, parseInt(cleaned, 10)));
+          }}
           className="w-20 text-center text-3xl font-bold py-2 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:border-brand-500"
         />
         <button type="button" onClick={() => onChange(value + 1)}
