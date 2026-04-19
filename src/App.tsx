@@ -7,7 +7,7 @@
  */
 
 import { useEffect } from 'react';
-import { Moon, Sun, LayoutDashboard, Users, Trophy, List, BarChart2, Monitor, HelpCircle } from 'lucide-react';
+import { Moon, Sun, LayoutDashboard, Users, Trophy, List, BarChart2, Monitor, HelpCircle, Timer } from 'lucide-react';
 import { useStore } from './store';
 import { Dashboard } from './components/Dashboard';
 import { PlayerManager } from './components/PlayerManager';
@@ -16,6 +16,7 @@ import { RoundView } from './components/RoundView';
 import { Standings } from './components/Standings';
 import { PresentationMode } from './components/PresentationMode';
 import { HelpPage } from './components/HelpPage';
+import { TimerView } from './components/TimerView';
 import { SessionManagerButton } from './components/SessionManager';
 import { SessionBanner } from './components/SessionBanner';
 import { ViewName } from './types';
@@ -37,6 +38,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'tournament',   label: 'Turnier',      shortLabel: 'Turnier', icon: Trophy          },
   { id: 'rounds',       label: 'Runden',       shortLabel: 'Runden',  icon: List            },
   { id: 'standings',    label: 'Rangliste',    shortLabel: 'Rang',    icon: BarChart2       },
+  { id: 'timer',        label: 'Timer',        shortLabel: 'Timer',   icon: Timer           },
   { id: 'presentation', label: 'Beamer',       shortLabel: 'Beamer',  icon: Monitor         },
   { id: 'help',         label: 'Hilfe',         shortLabel: 'Hilfe',   icon: HelpCircle      },
 ];
@@ -137,6 +139,7 @@ export function App() {
         {currentView === 'tournament'   && <TournamentSetup />}
         {currentView === 'rounds'       && <RoundView />}
         {currentView === 'standings'    && <Standings />}
+        {currentView === 'timer'        && <TimerView />}
         {currentView === 'presentation' && <PresentationMode />}
         {currentView === 'help'         && <HelpPage />}
       </main>

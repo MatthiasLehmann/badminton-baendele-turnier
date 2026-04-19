@@ -133,6 +133,7 @@ export type ViewName =
   | 'tournament'
   | 'rounds'
   | 'standings'
+  | 'timer'
   | 'presentation'
   | 'help';
 
