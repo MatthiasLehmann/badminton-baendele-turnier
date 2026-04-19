@@ -31,22 +31,10 @@ interface ResultFormProps {
   trackSetPoints: boolean;
 }
 
-function ResultForm({ match, players, onSave, onCancel, trackSetPoints }: ResultFormProps) {
-  const name = (id: string) => players.find((p) => p.id === id)?.name ?? id;
-  const initial = match.result;
-  const [score1, setScore1] = useState(initial?.score1 ?? 0);
-  const [score2, setScore2] = useState(initial?.score2 ?? 0);
-
-  const winner = score1 !== score2 ? matchWinner(score1, score2) : null;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave({ score1, score2, enteredAt: new Date().toISOString() });
-  };
-
-  const ScoreInput = ({
-    value, onChange, label,
-  }: { value: number; onChange: (v: number) => void; label: string }) => (
+function ScoreInput({
+  value, onChange, label,
+}: { value: number; onChange: (v: number) => void; label: string }) {
+  return (
     <div className="flex flex-col items-center gap-2">
       <span className="text-sm font-semibold text-gray-600 dark:text-gray-400 text-center">{label}</span>
       <div className="flex items-center gap-2">
@@ -69,6 +57,20 @@ function ResultForm({ match, players, onSave, onCancel, trackSetPoints }: Result
       </div>
     </div>
   );
+}
+
+function ResultForm({ match, players, onSave, onCancel, trackSetPoints }: ResultFormProps) {
+  const name = (id: string) => players.find((p) => p.id === id)?.name ?? id;
+  const initial = match.result;
+  const [score1, setScore1] = useState(initial?.score1 ?? 0);
+  const [score2, setScore2] = useState(initial?.score2 ?? 0);
+
+  const winner = score1 !== score2 ? matchWinner(score1, score2) : null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave({ score1, score2, enteredAt: new Date().toISOString() });
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
