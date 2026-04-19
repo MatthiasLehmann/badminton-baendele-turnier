@@ -24,7 +24,7 @@ function playEndBeep() {
       gain.gain.exponentialRampToValueAtTime(0.001, start + 0.3);
     });
   } catch {
-    // AudioContext not available (e.g. SSR)
+    // AudioContext not available
   }
 }
 
@@ -46,7 +46,7 @@ type TimerStatus = 'idle' | 'running' | 'paused' | 'finished';
 const ANNOUNCE_AT = [5 * 60, 2 * 60, 60]; // seconds remaining
 
 function announceRemaining(seconds: number) {
-  if (seconds === 5 * 60) speak('Noch 5 Minuten');
+  if (seconds === 5 * 60)    speak('Noch 5 Minuten');
   else if (seconds === 2 * 60) speak('Noch 2 Minuten');
   else if (seconds === 60)     speak('Noch 1 Minute');
 }
@@ -61,10 +61,10 @@ function TimerDisplay({ seconds, status }: { seconds: number; status: TimerStatu
   const display = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 
   const colorClass =
-    status === 'finished'  ? 'text-red-500 dark:text-red-400' :
-    seconds <= 60          ? 'text-orange-500 dark:text-orange-400' :
-    seconds <= 2 * 60      ? 'text-yellow-500 dark:text-yellow-400' :
-                             'text-gray-900 dark:text-white';
+    status === 'finished' ? 'text-red-500 dark:text-red-400' :
+    seconds <= 60         ? 'text-orange-500 dark:text-orange-400' :
+    seconds <= 2 * 60     ? 'text-yellow-500 dark:text-yellow-400' :
+                            'text-gray-900 dark:text-white';
 
   return (
     <div className={`text-8xl md:text-9xl font-mono font-bold tabular-nums tracking-tight transition-colors ${colorClass}`}>
@@ -76,7 +76,7 @@ function TimerDisplay({ seconds, status }: { seconds: number; status: TimerStatu
 interface ControlButtonProps {
   onClick: () => void;
   disabled?: boolean;
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: 'primary' | 'secondary';
   children: React.ReactNode;
 }
 
@@ -85,7 +85,6 @@ function ControlButton({ onClick, disabled = false, variant = 'secondary', child
   const styles = {
     primary:   'bg-brand-500 hover:bg-brand-600 text-white shadow-md',
     secondary: 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200',
-    danger:    'bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400',
   };
   return (
     <button onClick={onClick} disabled={disabled} className={`${base} ${styles[variant]}`}>
@@ -106,8 +105,16 @@ export function TimerView() {
   const [remaining, setRemaining]       = useState(defaultMinutes * 60);
   const [status, setStatus]             = useState<TimerStatus>('idle');
 
-  const intervalRef   = useRef<ReturnType<typeof setInterval> | null>(null);
-  const announcedRef  = useRef<Set<number>>(new Set());
+  // Timestamp-based tracking — survives background throttling
+  const startedAtRef    = useRef<number | null>(null); // Date.now() when last resumed
+  const elapsedRef      = useRef<number>(0);           // accumulated seconds before last pause
+  const intervalRef     = useRef<ReturnType<typeof setInterval> | null>(null);
+  const announcedRef    = useRef<Set<number>>(new Set());
+  const statusRef       = useRef<TimerStatus>('idle');
+  const totalSecondsRef = useRef(totalSeconds);
+
+  statusRef.current       = status;
+  totalSecondsRef.current = totalSeconds;
 
   // Sync default when tournament changes (only while idle)
   useEffect(() => {
@@ -125,73 +132,92 @@ export function TimerView() {
     }
   }, []);
 
-  const tick = useCallback(() => {
-    setRemaining((prev) => {
-      const next = prev - 1;
+  // Core update: calculate remaining from wall-clock time
+  const updateRemaining = useCallback(() => {
+    if (startedAtRef.current === null) return;
 
-      if (ANNOUNCE_AT.includes(next)) {
-        announceRemaining(next);
-        announcedRef.current.add(next);
+    const elapsed = elapsedRef.current + Math.floor((Date.now() - startedAtRef.current) / 1000);
+    const next    = Math.max(0, totalSecondsRef.current - elapsed);
+
+    // Fire announcements for any threshold we've crossed
+    for (const threshold of ANNOUNCE_AT) {
+      if (next <= threshold && !announcedRef.current.has(threshold)) {
+        announcedRef.current.add(threshold);
+        announceRemaining(threshold);
       }
+    }
 
-      if (next <= 0) {
-        return 0;
-      }
-      return next;
-    });
-  }, []);
+    setRemaining(next);
 
-  // Watch for 0 to trigger end
-  useEffect(() => {
-    if (remaining === 0 && status === 'running') {
+    if (next === 0 && statusRef.current === 'running') {
       clearTimer();
       setStatus('finished');
       speak('Ende');
       playEndBeep();
     }
-  }, [remaining, status, clearTimer]);
+  }, [clearTimer]);
+
+  // Re-sync immediately when tab becomes visible again
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (!document.hidden && statusRef.current === 'running') {
+        updateRemaining();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+  }, [updateRemaining]);
 
   const handleStart = () => {
     if (status === 'finished') return;
     if (status === 'idle') {
       speak(`Runde gestartet, ${Math.floor(totalSeconds / 60)} Minuten`);
       announcedRef.current.clear();
+      elapsedRef.current = 0;
     }
+    startedAtRef.current = Date.now();
     setStatus('running');
-    intervalRef.current = setInterval(tick, 1000);
+    intervalRef.current = setInterval(updateRemaining, 500); // 500 ms for responsiveness
   };
 
   const handlePause = () => {
+    if (startedAtRef.current !== null) {
+      elapsedRef.current += Math.floor((Date.now() - startedAtRef.current) / 1000);
+      startedAtRef.current = null;
+    }
     clearTimer();
     setStatus('paused');
   };
 
   const handleStop = () => {
     clearTimer();
+    startedAtRef.current = null;
+    elapsedRef.current   = 0;
+    announcedRef.current.clear();
     setStatus('idle');
     setRemaining(totalSeconds);
-    announcedRef.current.clear();
     window.speechSynthesis?.cancel();
   };
 
   const handleReset = () => {
     clearTimer();
+    startedAtRef.current = null;
+    elapsedRef.current   = 0;
+    announcedRef.current.clear();
     setStatus('idle');
     setRemaining(totalSeconds);
-    announcedRef.current.clear();
     window.speechSynthesis?.cancel();
   };
 
-  // Cleanup on unmount
   useEffect(() => () => clearTimer(), [clearTimer]);
 
   const progress = totalSeconds > 0 ? (remaining / totalSeconds) * 100 : 0;
 
   const progressColor =
-    remaining <= 60        ? 'bg-red-500' :
-    remaining <= 2 * 60    ? 'bg-orange-400' :
-    remaining <= 5 * 60    ? 'bg-yellow-400' :
-                             'bg-brand-500';
+    remaining <= 60      ? 'bg-red-500' :
+    remaining <= 2 * 60  ? 'bg-orange-400' :
+    remaining <= 5 * 60  ? 'bg-yellow-400' :
+                           'bg-brand-500';
 
   return (
     <div className="max-w-xl mx-auto space-y-8">
@@ -207,13 +233,12 @@ export function TimerView() {
       {/* Timer card */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 flex flex-col items-center gap-8">
 
-        {/* Display */}
         <TimerDisplay seconds={remaining} status={status} />
 
         {/* Progress bar */}
         <div className="w-full h-3 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all duration-1000 ${progressColor}`}
+            className={`h-full rounded-full transition-all duration-500 ${progressColor}`}
             style={{ width: `${progress}%` }}
           />
         </div>
