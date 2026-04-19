@@ -166,6 +166,15 @@ export function App() {
           GitHub
         </a>
         {' · '}
+        <a
+          href="https://paypal.me/mattmannWald"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-brand-600 dark:text-brand-400 hover:underline font-semibold"
+        >
+          ☕ Kaffee spendieren
+        </a>
+        {' · '}
         v{__APP_VERSION__}
       </footer>
 
